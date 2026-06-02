@@ -15,10 +15,10 @@ const suggestion = (statement: ParsedStatement): string => {
    and permanently deletes all data
 
 ✅ Good: Follow these steps:
-   1. Remove all references to "${statement.table}" from your application code
-   2. Run 'npx prisma generate' to update Prisma Client
-   3. Deploy the application code changes
-   4. Then apply this migration
+   1. Add @@ignore to the model mapped to "${statement.table}" in schema.prisma so Prisma
+      Client stops using it, and remove remaining references from your code
+   2. Run 'npx prisma generate' and deploy the application
+   3. Then apply this migration to drop the table
 
 To approve this operation (reviewed and intentional), add above the statement:
    -- prisma-strong-migrations-approve-next-line dropTable

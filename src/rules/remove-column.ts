@@ -14,10 +14,11 @@ const suggestion = (statement: ParsedStatement): string => {
 ❌ Bad: Removing a column immediately can cause errors if the application still references it
 
 ✅ Good: Follow these steps:
-   1. Remove all usages of '${statement.column}' field from your application code
-   2. Run 'npx prisma generate' to update Prisma Client
-   3. Deploy the application code changes
-   4. Then apply this migration
+   1. Add @ignore to the '${statement.column}' field in schema.prisma so Prisma Client
+      stops reading/writing it, and remove remaining usages from your code:
+         ${statement.column} <type> @ignore
+   2. Run 'npx prisma generate' and deploy the application
+   3. Then apply this migration to drop the column
 
 📚 More info: https://github.com/prisma/prisma/issues/16821
 

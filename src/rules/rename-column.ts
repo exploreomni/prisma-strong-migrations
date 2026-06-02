@@ -19,7 +19,8 @@ const suggestion = (statement: ParsedStatement): string => {
    3. Run 'npx prisma generate' to update Prisma Client
    4. Deploy the application code changes
    5. Migrate the data from old column to new column
-   6. Then drop the old column '${statement.column}'
+   6. Add @ignore to the old '${statement.column}' field, run 'npx prisma generate'
+      and deploy, then drop the old column
 
 To approve this operation (reviewed and intentional), add above the statement:
    -- prisma-strong-migrations-approve-next-line renameColumn

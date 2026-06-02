@@ -32,10 +32,9 @@ ALTER TABLE "users" DROP COLUMN "name";
 
 #### Safe Approach
 
-1. Remove all references to the column from application code
-2. Run `npx prisma generate` to update Prisma Client
-3. Deploy code changes
-4. Apply the migration
+1. Add `@ignore` to the field in `schema.prisma` so Prisma Client stops accessing it, and remove remaining usages from your code
+2. Run `npx prisma generate` and deploy the application
+3. Then apply this migration to drop the column
 
 #### How to Skip
 
@@ -68,7 +67,7 @@ ALTER TABLE "users" RENAME COLUMN "name" TO "full_name";
 3. Backfill data from old column to new column
 4. Modify code to read from new column
 5. Stop writing to old column
-6. Remove old column
+6. Add `@ignore` to the old field, then remove the old column
 
 ---
 
@@ -94,7 +93,7 @@ ALTER TABLE "users" RENAME TO "customers";
 3. Backfill data from old table to new table
 4. Modify code to read from new table
 5. Stop writing to old table
-6. Remove old table
+6. Add `@@ignore` to the old model, then remove the old table
 
 ---
 
@@ -132,7 +131,7 @@ The following changes can be done safely without table rewrite:
 3. Backfill data from old column to new column
 4. Modify code to read from new column
 5. Stop writing to old column
-6. Remove old column
+6. Add `@ignore` to the old field, then remove the old column
 
 ---
 
@@ -590,10 +589,9 @@ DROP TABLE "users";
 
 #### Safe Approach
 
-1. Remove all references to the model from application code
-2. Run `npx prisma generate` to update Prisma Client
-3. Deploy the application code changes
-4. Then apply this migration
+1. Add `@@ignore` to the model in `schema.prisma` so Prisma Client stops using it, and remove remaining references from your code
+2. Run `npx prisma generate` and deploy the application
+3. Then apply this migration to drop the table
 
 #### How to Skip
 

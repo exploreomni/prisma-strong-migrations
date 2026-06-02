@@ -320,10 +320,15 @@ ALTER TABLE "users" DROP COLUMN "name";
 
 #### Good
 
-1. Remove all usages of the `name` field from your application code
-2. Run `npx prisma generate` to update Prisma Client
-3. Deploy the code changes
-4. Then apply this migration with a disable comment:
+1. Add `@ignore` to the `name` field in `schema.prisma` so Prisma Client stops accessing it, and remove remaining usages from your code
+2. Run `npx prisma generate` and deploy the code changes
+3. Then apply this migration:
+
+```prisma
+model User {
+  name String @ignore // excluded from Prisma Client before the column is dropped
+}
+```
 
 ```sql
 -- prisma-strong-migrations-disable-next-line removeColumn
@@ -352,7 +357,7 @@ A safer approach is to:
 3. Backfill data from the old column to the new column
 4. Move reads from the old column to the new column
 5. Stop writing to the old column
-6. Drop the old column
+6. Add `@ignore` to the old field, then drop the old column
 
 ---
 
@@ -375,7 +380,7 @@ A safer approach is to:
 3. Backfill data from the old table to the new table
 4. Move reads from the old table to the new table
 5. Stop writing to the old table
-6. Drop the old table
+6. Add `@@ignore` to the old model, then drop the old table
 
 ---
 
@@ -407,7 +412,7 @@ For other type changes, a safer approach is to:
 3. Backfill data from the old column to the new column
 4. Move reads from the old column to the new column
 5. Stop writing to the old column
-6. Drop the old column
+6. Add `@ignore` to the old field, then drop the old column
 
 ---
 
@@ -765,10 +770,9 @@ DROP TABLE "users";
 
 #### Good
 
-1. Remove all references to the model from application code
-2. Run `npx prisma generate` to update Prisma Client
-3. Deploy the application code changes
-4. Then apply this migration with a disable comment:
+1. Add `@@ignore` to the model in `schema.prisma` so Prisma Client stops using it, and remove remaining references from your code
+2. Run `npx prisma generate` and deploy the application
+3. Then apply this migration:
 
 ```sql
 -- prisma-strong-migrations-disable-next-line dropTable
