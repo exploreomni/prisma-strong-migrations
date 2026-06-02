@@ -21,7 +21,10 @@ const suggestion = (statement: ParsedStatement): string => {
    5. Deploy the application code changes
    6. Then drop the old column
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line changeColumnType
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line changeColumnType
 `.trim();
 };

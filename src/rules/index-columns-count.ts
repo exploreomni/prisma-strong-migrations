@@ -22,7 +22,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    2. Split into separate indexes for different query patterns
    3. Use partial indexes to index only a subset of rows
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line indexColumnsCount
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line indexColumnsCount
 `.trim();
 };

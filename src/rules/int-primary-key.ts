@@ -29,7 +29,10 @@ const suggestion = (statement: ParsedStatement): string => {
      id String @id @default(uuid(7))
    }
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line intPrimaryKey
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line intPrimaryKey
 `.trim();
 };

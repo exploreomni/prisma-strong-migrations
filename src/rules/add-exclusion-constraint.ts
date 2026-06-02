@@ -22,7 +22,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    2. Consider whether application-level validation can replace the constraint
    3. If the constraint is required, plan for a maintenance window
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addExclusionConstraint
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addExclusionConstraint
 `.trim();
 };

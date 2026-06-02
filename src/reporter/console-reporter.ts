@@ -3,12 +3,15 @@ import { relative } from "node:path";
 import type { CheckResult } from "../rules/types";
 
 export const consoleReport = (results: CheckResult[]): void => {
-  if (results.length === 0) {
+  const violations = results.filter((r) => !r.approved);
+  const approved = results.filter((r) => r.approved);
+
+  if (violations.length === 0 && approved.length === 0) {
     console.log(chalk.green("✓ No issues found"));
     return;
   }
 
-  const byFile = Map.groupBy(results, (r) => r.statement.migrationPath ?? "unknown");
+  const byFile = Map.groupBy(violations, (r) => r.statement.migrationPath ?? "unknown");
 
   for (const [filePath, fileResults] of byFile) {
     console.log();
@@ -33,16 +36,20 @@ export const consoleReport = (results: CheckResult[]): void => {
     }
   }
 
-  const errors = results.filter((r) => r.rule.severity === "error").length;
-  const warnings = results.filter((r) => r.rule.severity === "warning").length;
+  const errors = violations.filter((r) => r.rule.severity === "error").length;
+  const warnings = violations.filter((r) => r.rule.severity === "warning").length;
+  const approvedNote = approved.length > 0 ? chalk.green(`, ${approved.length} approved`) : "";
 
   console.log();
   if (errors > 0) {
     console.log(
       chalk.red(`✗ ${errors} error${errors !== 1 ? "s" : ""}`) +
-        (warnings > 0 ? chalk.yellow(`, ${warnings} warning${warnings !== 1 ? "s" : ""}`) : ""),
+        (warnings > 0 ? chalk.yellow(`, ${warnings} warning${warnings !== 1 ? "s" : ""}`) : "") +
+        approvedNote,
     );
+  } else if (warnings > 0) {
+    console.log(chalk.yellow(`⚠ ${warnings} warning${warnings !== 1 ? "s" : ""}`) + approvedNote);
   } else {
-    console.log(chalk.yellow(`⚠ ${warnings} warning${warnings !== 1 ? "s" : ""}`));
+    console.log(chalk.green("✓ No issues found") + chalk.dim(` (${approved.length} approved)`));
   }
 };

@@ -25,7 +25,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    3. Add the default value in a separate migration if needed:
       ALTER TABLE "table_name" ALTER COLUMN "column_name" SET DEFAULT volatile_function();
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addVolatileDefault
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addVolatileDefault
 `.trim();
 };

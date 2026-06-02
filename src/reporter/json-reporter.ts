@@ -11,8 +11,9 @@ export const jsonReport = (results: CheckResult[]): JsonReport => {
     suggestion: result.suggestion,
   });
 
-  const errors = results.filter((r) => r.rule.severity === "error").map(toItem);
-  const warnings = results.filter((r) => r.rule.severity === "warning").map(toItem);
+  const violations = results.filter((r) => !r.approved);
+  const errors = violations.filter((r) => r.rule.severity === "error").map(toItem);
+  const warnings = violations.filter((r) => r.rule.severity === "warning").map(toItem);
 
   return {
     errors,

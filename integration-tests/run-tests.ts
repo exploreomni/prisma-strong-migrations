@@ -6,8 +6,9 @@ const CASES_DIR = join(import.meta.dirname, "cases");
 
 interface ExpectedResult {
   results: Array<{
-    ruleCode: string;
+    ruleName: string;
     line?: number;
+    approved?: boolean;
   }>;
 }
 
@@ -55,9 +56,13 @@ if (cases.length === 0) {
           migrationPath: sqlPath,
         });
 
-        expect(results.map((r) => ({ ruleName: r.rule.name, line: r.statement.line }))).toEqual(
-          expected.results,
-        );
+        expect(
+          results.map((r) => ({
+            ruleName: r.rule.name,
+            line: r.statement.line,
+            ...(r.approved ? { approved: true } : {}),
+          })),
+        ).toEqual(expected.results);
       });
     }
   });

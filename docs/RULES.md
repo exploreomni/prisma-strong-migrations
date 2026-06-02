@@ -2,6 +2,12 @@
 
 This document explains the details of each rule detected by prisma-strong-migrations.
 
+> **Skip vs. Approve** — Every rule below shows a `disable-next-line` example to
+> silence it. You can also use `prisma-strong-migrations-approve-next-line <rule>`
+> with the same syntax. Both skip the rule for the next statement, but approved
+> findings are counted in the summary and do not fail the run
+> (use it when the operation was reviewed and is intentionally allowed).
+
 ---
 
 ## Dangerous Operations (Error)

@@ -114,7 +114,11 @@ describe("implicitM2mRelationRule", () => {
         line: 1,
         table: "_CategoryToPost",
       };
-      expect(implicitM2mRelationRule.suggestion(stmt)).toContain(
+      const suggestion = implicitM2mRelationRule.suggestion(stmt);
+      expect(suggestion).toContain(
+        "prisma-strong-migrations-approve-next-line implicitM2mRelation",
+      );
+      expect(suggestion).toContain(
         "prisma-strong-migrations-disable-next-line implicitM2mRelation",
       );
     });

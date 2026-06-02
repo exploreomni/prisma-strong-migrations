@@ -24,7 +24,10 @@ const suggestion = (statement: ParsedStatement): string => {
    4. Drop the temporary check constraint:
       ALTER TABLE "${statement.table}" DROP CONSTRAINT "${statement.table}_${statement.column}_not_null";
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line setNotNull
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line setNotNull
 `.trim();
 };

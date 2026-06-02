@@ -23,7 +23,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    4. Apply this migration
    5. Run npx prisma generate and deploy the updated Prisma Client
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line enumValueRemoval
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line enumValueRemoval
 `.trim();
 };

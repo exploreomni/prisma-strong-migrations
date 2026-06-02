@@ -22,7 +22,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 
    Move other DDL statements to a separate migration file.
 
-To skip this check, add above the comment:
+To approve this operation (reviewed and intentional), add above the comment:
+   -- prisma-strong-migrations-approve-next-line mixedStatementsWithDisabledTransaction
+
+Or to skip this check, add above the comment:
    -- prisma-strong-migrations-disable-next-line mixedStatementsWithDisabledTransaction
 `.trim();
 };

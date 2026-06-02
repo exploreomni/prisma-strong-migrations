@@ -26,7 +26,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 
    For large tables, consider doing the backfill in batches from application code instead.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line backfillInMigration
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line backfillInMigration
 `.trim();
 };

@@ -29,7 +29,10 @@ const suggestion = (statement: ParsedStatement): string => {
    Or add @default(...) to your Prisma schema before generating the migration,
    then remove it after deploying.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addNotNullWithoutDefault
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addNotNullWithoutDefault
 `.trim();
 };

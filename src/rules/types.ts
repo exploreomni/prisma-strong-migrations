@@ -32,4 +32,6 @@ export interface CheckResult {
   statement: ParsedStatement;
   message: string;
   suggestion: string;
+  /** True when approved via an approve-next-line comment. */
+  approved: boolean;
 }

@@ -20,7 +20,10 @@ const suggestion = (statement: ParsedStatement): string => {
    3. Deploy the application code changes
    4. Then apply this migration
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line dropTable
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line dropTable
 `.trim();
 };

@@ -17,7 +17,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 ✅ Good: Run VACUUM outside the migration as a separate maintenance task:
    psql -c "VACUUM ANALYZE \\"table_name\\";"
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line vacuumInMigration
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line vacuumInMigration
 `.trim();
 };

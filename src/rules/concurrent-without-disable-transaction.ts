@@ -26,7 +26,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 ⚠️  Note: Keep this file minimal — ideally one statement only.
    Disabling the transaction removes rollback protection for the entire file.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line concurrentWithoutDisableTransaction
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line concurrentWithoutDisableTransaction
 `.trim();
 };

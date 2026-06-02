@@ -25,7 +25,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    2. In a separate transaction, validate the constraint:
       ALTER TABLE "table_name" VALIDATE CONSTRAINT "constraint_name";
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addCheckConstraint
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addCheckConstraint
 `.trim();
 };

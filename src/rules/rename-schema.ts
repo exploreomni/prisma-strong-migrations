@@ -20,7 +20,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    4. Deploy the application code changes
    5. Then rename the schema
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line renameSchema
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line renameSchema
 `.trim();
 };

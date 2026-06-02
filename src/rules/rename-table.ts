@@ -21,7 +21,10 @@ const suggestion = (statement: ParsedStatement): string => {
    5. Migrate the data from old table '${statement.table}' to new table
    6. Then drop the old table
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line renameTable
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line renameTable
 `.trim();
 };

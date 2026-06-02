@@ -260,6 +260,50 @@ ALTER TABLE "users" DROP COLUMN "name";`;
     });
   });
 
+  describe("approve comment", () => {
+    it("approve-next-line → approved populated for next stmt", () => {
+      const sql = `-- prisma-strong-migrations-approve-next-line removeColumn
+ALTER TABLE "users" DROP COLUMN "name";`;
+      const results = parseSql(sql);
+      expect(results).toHaveLength(1);
+      expect(results[0].approved).toEqual(["removeColumn"]);
+      expect(results[0].disabled).toBeUndefined();
+    });
+
+    it("no rule name → approve all (empty array)", () => {
+      const sql = `-- prisma-strong-migrations-approve-next-line
+ALTER TABLE "users" DROP COLUMN "name";`;
+      const results = parseSql(sql);
+      expect(results[0].approved).toEqual([]);
+    });
+
+    it("reason comment after -- is ignored but the rule is still approved", () => {
+      const sql = `-- prisma-strong-migrations-approve-next-line removeColumn -- レビュー済み
+ALTER TABLE "users" DROP COLUMN "name";`;
+      const results = parseSql(sql);
+      expect(results[0].approved).toEqual(["removeColumn"]);
+    });
+
+    it("disable and approve comments coexist on the same statement", () => {
+      const sql = `-- prisma-strong-migrations-disable-next-line renameColumn
+-- prisma-strong-migrations-approve-next-line removeColumn
+ALTER TABLE "users" DROP COLUMN "name";`;
+      const results = parseSql(sql);
+      expect(results).toHaveLength(1);
+      expect(results[0].disabled).toEqual(["renameColumn"]);
+      expect(results[0].approved).toEqual(["removeColumn"]);
+    });
+
+    it("approve comment not before statement → no approved", () => {
+      const sql = `ALTER TABLE "users" DROP COLUMN "name";
+-- prisma-strong-migrations-approve-next-line removeColumn
+ALTER TABLE "users" ADD COLUMN "email" text;`;
+      const results = parseSql(sql);
+      expect(results[0].approved).toBeUndefined();
+      expect(results[1].approved).toEqual(["removeColumn"]);
+    });
+  });
+
   describe("line numbers", () => {
     it("assigns correct line number to each statement", () => {
       const sql = `ALTER TABLE "users" DROP COLUMN "name";

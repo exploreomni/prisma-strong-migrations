@@ -97,6 +97,48 @@ ALTER TABLE "users" DROP COLUMN "name";
     expect(results[0].rule.name).toBe("removeColumn");
   });
 
+  it("should mark approved findings with approve-next-line for a specific rule", async () => {
+    const sql = `
+-- prisma-strong-migrations-approve-next-line removeColumn
+ALTER TABLE "users" DROP COLUMN "name";
+    `;
+    const results = await check({ sql, config: baseConfig, migrationPath: "migration.sql" });
+    expect(results).toHaveLength(1);
+    expect(results[0].rule.name).toBe("removeColumn");
+    expect(results[0].approved).toBe(true);
+  });
+
+  it("should mark approved findings with approve-next-line for all rules", async () => {
+    const sql = `
+-- prisma-strong-migrations-approve-next-line
+ALTER TABLE "users" DROP COLUMN "name";
+    `;
+    const results = await check({ sql, config: baseConfig, migrationPath: "migration.sql" });
+    expect(results).toHaveLength(1);
+    expect(results[0].approved).toBe(true);
+  });
+
+  it("should not approve when approve comment names a different rule", async () => {
+    const sql = `
+-- prisma-strong-migrations-approve-next-line renameColumn
+ALTER TABLE "users" DROP COLUMN "name";
+    `;
+    const results = await check({ sql, config: baseConfig, migrationPath: "migration.sql" });
+    expect(results).toHaveLength(1);
+    expect(results[0].rule.name).toBe("removeColumn");
+    expect(results[0].approved).toBe(false);
+  });
+
+  it("disable takes precedence over approve for the same rule", async () => {
+    const sql = `
+-- prisma-strong-migrations-disable-next-line removeColumn
+-- prisma-strong-migrations-approve-next-line removeColumn
+ALTER TABLE "users" DROP COLUMN "name";
+    `;
+    const results = await check({ sql, config: baseConfig, migrationPath: "migration.sql" });
+    expect(results).toEqual([]);
+  });
+
   it("should include message and suggestion in results", async () => {
     const results = await check({
       sql: 'ALTER TABLE "users" DROP COLUMN "name";',

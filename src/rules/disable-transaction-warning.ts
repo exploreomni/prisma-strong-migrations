@@ -20,7 +20,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 ❌ Bad: Mixing other DDL statements in the same file increases the risk
    of leaving the database in a partial state if a failure occurs.
 
-To skip this check, add above the comment:
+To approve this operation (reviewed and intentional), add above the comment:
+   -- prisma-strong-migrations-approve-next-line disableTransactionWarning
+
+Or to skip this check, add above the comment:
    -- prisma-strong-migrations-disable-next-line disableTransactionWarning
 `.trim();
 };

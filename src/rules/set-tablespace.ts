@@ -20,7 +20,10 @@ const suggestion = (statement: ParsedStatement): string => {
 ✅ Good: Run this operation during a low-traffic maintenance window,
    not as part of a regular migration.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line setTablespace
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line setTablespace
 `.trim();
 };

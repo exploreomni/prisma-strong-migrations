@@ -22,7 +22,10 @@ const suggestion = (statement: ParsedStatement): string => {
    - VACUUM: reclaims dead tuples without a full rewrite
    - Run CLUSTER during a low-traffic maintenance window if necessary
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line clusterTable
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line clusterTable
 `.trim();
 };

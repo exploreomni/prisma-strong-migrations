@@ -41,11 +41,16 @@ export async function check(options: CheckOptions): Promise<CheckResult[]> {
       }
 
       if (rule.detect(statement, context)) {
+        const approved =
+          statement.approved !== undefined &&
+          (statement.approved.length === 0 || statement.approved.includes(rule.name));
+
         results.push({
           rule,
           statement,
           message: rule.message(statement),
           suggestion: rule.suggestion(statement),
+          approved,
         });
       }
     }

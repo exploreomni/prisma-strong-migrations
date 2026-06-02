@@ -23,7 +23,10 @@ const suggestion = (statement: ParsedStatement): string => {
    DELETE FROM "${table}" WHERE 1=1; -- intentional full delete
    Or use TRUNCATE TABLE if appropriate (though that has its own risks).
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line deleteWithoutWhere
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line deleteWithoutWhere
 `.trim();
 };

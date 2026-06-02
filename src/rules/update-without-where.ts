@@ -23,7 +23,10 @@ const suggestion = (statement: ParsedStatement): string => {
    If you intentionally want to update all rows, make it explicit:
    UPDATE "${table}" SET "column" = value WHERE 1=1; -- intentional full update
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line updateWithoutWhere
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line updateWithoutWhere
 `.trim();
 };

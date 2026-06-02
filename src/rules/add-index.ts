@@ -30,7 +30,10 @@ const suggestion = (_statement: ParsedStatement): string => {
    - -- prisma-migrate-disable-next-transaction disables transactions for the ENTIRE file.
    - Keep this migration file separate — ideally one statement only.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addIndex
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addIndex
 `.trim();
 };

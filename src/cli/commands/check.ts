@@ -33,12 +33,14 @@ export function registerCheckCommand(program: Command): void {
         const sql = await readFile(migrationPath, "utf-8");
         const results = await check({ sql, config, migrationPath });
         if (options.fix && results.length > 0) {
-          const { sql: fixedSql, appliedCount, skippedResults } = applyFixes(sql, results);
+          const fixable = results.filter((r) => !r.approved);
+          const approvedResults = results.filter((r) => r.approved);
+          const { sql: fixedSql, appliedCount, skippedResults } = applyFixes(sql, fixable);
           await writeFixedSql(migrationPath, fixedSql);
           if (appliedCount > 0) {
             console.log(`✔ Auto-fixed ${appliedCount} issue(s) in ${migrationPath}`);
           }
-          allResults.push(...skippedResults);
+          allResults.push(...skippedResults, ...approvedResults);
         } else {
           allResults.push(...results);
         }
@@ -51,12 +53,14 @@ export function registerCheckCommand(program: Command): void {
           const sql = await readFile(filePath, "utf-8");
           const results = await check({ sql, config, migrationPath: filePath });
           if (options.fix && results.length > 0) {
-            const { sql: fixedSql, appliedCount, skippedResults } = applyFixes(sql, results);
+            const fixable = results.filter((r) => !r.approved);
+            const approvedResults = results.filter((r) => r.approved);
+            const { sql: fixedSql, appliedCount, skippedResults } = applyFixes(sql, fixable);
             await writeFixedSql(filePath, fixedSql);
             if (appliedCount > 0) {
               console.log(`✔ Auto-fixed ${appliedCount} issue(s) in ${filePath}`);
             }
-            allResults.push(...skippedResults);
+            allResults.push(...skippedResults, ...approvedResults);
           } else {
             allResults.push(...results);
           }
@@ -71,8 +75,9 @@ export function registerCheckCommand(program: Command): void {
       }
 
       if (options.fail !== false) {
-        const hasErrors = allResults.some((r) => r.rule.severity === "error");
-        const hasWarnings = allResults.some((r) => r.rule.severity === "warning");
+        const failing = allResults.filter((r) => !r.approved);
+        const hasErrors = failing.some((r) => r.rule.severity === "error");
+        const hasWarnings = failing.some((r) => r.rule.severity === "warning");
         const failOnWarning = config.failOnWarning ?? false;
 
         if (hasErrors || (failOnWarning && hasWarnings)) {

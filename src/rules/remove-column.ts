@@ -21,7 +21,10 @@ const suggestion = (statement: ParsedStatement): string => {
 
 📚 More info: https://github.com/prisma/prisma/issues/16821
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line removeColumn
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line removeColumn
 `.trim();
 };

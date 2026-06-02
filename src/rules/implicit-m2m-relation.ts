@@ -44,7 +44,10 @@ const suggestion = (statement: ParsedStatement): string => {
 
    Then run: npx prisma migrate dev
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line implicitM2mRelation
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line implicitM2mRelation
 `.trim();
 };

@@ -21,7 +21,10 @@ const suggestion = (statement: ParsedStatement): string => {
    5. Migrate the data from old column to new column
    6. Then drop the old column '${statement.column}'
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line renameColumn
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line renameColumn
 `.trim();
 };

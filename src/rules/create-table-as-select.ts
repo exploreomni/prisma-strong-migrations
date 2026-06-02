@@ -23,7 +23,10 @@ const suggestion = (statement: ParsedStatement): string => {
    - If you need the table for a migration step, create it empty first,
      then backfill in a separate non-migration process
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line createTableAsSelect
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line createTableAsSelect
 `.trim();
 };

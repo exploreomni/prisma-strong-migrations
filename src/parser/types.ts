@@ -52,6 +52,7 @@ export interface ParsedStatement {
   hasDefault?: boolean;
   disabled?: string[];
   disableReason?: string;
+  approved?: string[];
   hasWhere?: boolean;
   typeName?: string;
   hasSerialId?: boolean;

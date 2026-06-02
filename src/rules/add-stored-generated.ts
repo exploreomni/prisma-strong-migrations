@@ -22,7 +22,10 @@ const suggestion = (_statement: ParsedStatement): string => {
       UPDATE "table_name" SET "column_name" = <expression>;
    3. Consider using a virtual/computed column approach at the application level instead
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addStoredGenerated
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addStoredGenerated
 `.trim();
 };

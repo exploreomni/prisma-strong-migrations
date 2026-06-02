@@ -21,7 +21,10 @@ const suggestion = (statement: ParsedStatement): string => {
    1. Ensure ENABLE TRIGGER is called before the migration ends
    2. Verify all foreign key constraints are still valid after re-enabling
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line disableTrigger
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line disableTrigger
 `.trim();
 };

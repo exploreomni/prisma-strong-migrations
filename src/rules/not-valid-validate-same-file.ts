@@ -24,7 +24,10 @@ const suggestion = (_statement: ParsedStatement): string => {
 
    This way VALIDATE CONSTRAINT uses a ShareUpdateExclusiveLock that allows reads and writes.
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line notValidValidateSameFile
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line notValidValidateSameFile
 `.trim();
 };

@@ -21,6 +21,7 @@ function makeResult(
     statement,
     message: rule.message(statement),
     suggestion: rule.suggestion(statement),
+    approved: false,
   };
 }
 
@@ -121,6 +122,7 @@ describe("applyFixes", () => {
         statement: stmt,
         message: removeColumnRule.message(stmt),
         suggestion: removeColumnRule.suggestion(stmt),
+        approved: false,
       };
 
       const { appliedCount, skippedResults } = applyFixes(sql, [result]);
@@ -142,6 +144,7 @@ describe("applyFixes", () => {
         statement: stmt,
         message: addIndexRule.message(stmt),
         suggestion: addIndexRule.suggestion(stmt),
+        approved: false,
       }));
 
       const { sql: fixed } = applyFixes(sql, results);

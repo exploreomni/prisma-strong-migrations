@@ -13,6 +13,9 @@ import type { ParsedStatement, ConstraintType } from "./types";
 const DISABLE_COMMENT_PATTERN =
   /--\s*prisma-strong-migrations-disable-next-line\s*([\w,\s]*)(?:--\s*(.+))?/;
 
+const APPROVE_COMMENT_PATTERN =
+  /--\s*prisma-strong-migrations-approve-next-line\s*([\w,\s]*)(?:--\s*(.+))?/;
+
 const DISABLE_TRANSACTION_PATTERN = /--\s*prisma-migrate-disable-next-transaction/i;
 
 const NOT_VALID_PATTERN = /\bNOT\s+VALID\b/i;
@@ -31,29 +34,33 @@ function lineNumberAt(offset: number, sql: string): number {
 
 // ---- Disable-comment map ----
 
-type DisableEntry = { rules: string[]; reason?: string };
+type DirectiveEntry = { rules: string[]; reason?: string };
+
+function isDirectiveComment(line: string): boolean {
+  return DISABLE_COMMENT_PATTERN.test(line) || APPROVE_COMMENT_PATTERN.test(line);
+}
 
 /**
- * Scan SQL for disable-next-line comments.
- * Returns a map of { line number of the NEXT line → DisableEntry }.
- * An empty rules array means "disable all rules".
- * Multiple disable comments targeting the same statement are merged.
+ * Scan SQL for next-line directive comments matching `pattern`.
+ * Returns a map of { line number of the NEXT statement → DirectiveEntry }.
+ * An empty rules array means "all rules".
+ * Multiple directive comments targeting the same statement are merged.
  */
-function buildDisableMap(sql: string): Map<number, DisableEntry> {
-  const map = new Map<number, DisableEntry>();
+function buildDirectiveMap(sql: string, pattern: RegExp): Map<number, DirectiveEntry> {
+  const map = new Map<number, DirectiveEntry>();
   const lines = sql.split("\n");
 
   lines.forEach((lineText, lineIndex) => {
-    const match = lineText.match(DISABLE_COMMENT_PATTERN);
+    const match = lineText.match(pattern);
     if (!match) return;
 
     const rulesText = match[1].trim();
     const rules = rulesText ? rulesText.split(/[\s,]+/).filter(Boolean) : [];
     const reason = match[2]?.trim() || undefined;
 
-    // Skip over any consecutive disable-next-line comments to find the target SQL line
+    // Skip over any consecutive directive comments (disable or approve) to find the target SQL line
     let targetIndex = lineIndex + 1;
-    while (targetIndex < lines.length && DISABLE_COMMENT_PATTERN.test(lines[targetIndex])) {
+    while (targetIndex < lines.length && isDirectiveComment(lines[targetIndex])) {
       targetIndex++;
     }
     const targetLineNumber = targetIndex + 1; // convert to 1-based
@@ -71,6 +78,12 @@ function buildDisableMap(sql: string): Map<number, DisableEntry> {
 
   return map;
 }
+
+const buildDisableMap = (sql: string): Map<number, DirectiveEntry> =>
+  buildDirectiveMap(sql, DISABLE_COMMENT_PATTERN);
+
+const buildApproveMap = (sql: string): Map<number, DirectiveEntry> =>
+  buildDirectiveMap(sql, APPROVE_COMMENT_PATTERN);
 
 // ---- Data type helpers ----
 
@@ -617,18 +630,23 @@ function buildDisableTransactionStatements(sql: string): ParsedStatement[] {
 
 export function parseSql(sql: string): ParsedStatement[] {
   const disableMap = buildDisableMap(sql);
+  const approveMap = buildApproveMap(sql);
 
-  function applyDisableComment(parsedStatement: ParsedStatement): ParsedStatement {
-    const entry = disableMap.get(parsedStatement.line);
-    if (entry !== undefined) {
-      parsedStatement.disabled = entry.rules;
-      if (entry.reason) parsedStatement.disableReason = entry.reason;
+  function applyDirectiveComments(parsedStatement: ParsedStatement): ParsedStatement {
+    const disableEntry = disableMap.get(parsedStatement.line);
+    if (disableEntry !== undefined) {
+      parsedStatement.disabled = disableEntry.rules;
+      if (disableEntry.reason) parsedStatement.disableReason = disableEntry.reason;
+    }
+    const approveEntry = approveMap.get(parsedStatement.line);
+    if (approveEntry !== undefined) {
+      parsedStatement.approved = approveEntry.rules;
     }
     return parsedStatement;
   }
 
   const disableTransactionStatements =
-    buildDisableTransactionStatements(sql).map(applyDisableComment);
+    buildDisableTransactionStatements(sql).map(applyDirectiveComments);
 
   // Fast path: parse the whole file at once
   try {
@@ -637,7 +655,7 @@ export function parseSql(sql: string): ParsedStatement[] {
       if (!statement._location) return [];
       const { raw, line } = getRawTextAndLine(sql, statement._location);
       const parsed = convertStatement(statement, raw, line) ?? parseWithRegexFallback(raw, line);
-      return parsed ? [applyDisableComment(parsed)] : [];
+      return parsed ? [applyDirectiveComments(parsed)] : [];
     });
     return [...disableTransactionStatements, ...sqlStatements];
   } catch {
@@ -666,14 +684,14 @@ export function parseSql(sql: string): ParsedStatement[] {
         if (ast[0]) {
           const parsed =
             convertStatement(ast[0], trimmed, line) ?? parseWithRegexFallback(stripped, line);
-          return parsed ? [applyDisableComment(parsed)] : [];
+          return parsed ? [applyDirectiveComments(parsed)] : [];
         }
       } catch {
         // AST parse failed → try regex patterns
       }
 
       const parsed = parseWithRegexFallback(stripped, line);
-      return parsed ? [applyDisableComment(parsed)] : [];
+      return parsed ? [applyDirectiveComments(parsed)] : [];
     }),
   ];
 }

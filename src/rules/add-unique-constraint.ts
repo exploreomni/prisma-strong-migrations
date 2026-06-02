@@ -24,7 +24,10 @@ const suggestion = (_statement: ParsedStatement): string => {
       ALTER TABLE "table_name" ADD CONSTRAINT "constraint_name"
         UNIQUE USING INDEX "index_name";
 
-To skip this check, add above the statement:
+To approve this operation (reviewed and intentional), add above the statement:
+   -- prisma-strong-migrations-approve-next-line addUniqueConstraint
+
+Or to skip this check, add above the statement:
    -- prisma-strong-migrations-disable-next-line addUniqueConstraint
 `.trim();
 };

@@ -1222,6 +1222,32 @@ ALTER TABLE "users" DROP COLUMN "name";
 ALTER TABLE "users" DROP COLUMN "name";
 ```
 
+## Approving Checks
+
+When you have reviewed an operation and handled it properly, mark it with
+`approve-next-line` to record that it was approved:
+
+```sql
+-- prisma-strong-migrations-approve-next-line removeColumn
+-- Reason: field already removed from the app and deployed
+ALTER TABLE "users" DROP COLUMN "name";
+```
+
+Approved findings are counted in the console summary (e.g. `1 approved`) and do
+not fail the run (and are not auto-fixed by `--fix`). The JSON output
+(`--format json`) reports only real errors and warnings. You can approve a
+specific rule, multiple rules, or all rules for the next statement:
+
+```sql
+-- Approve multiple rules
+-- prisma-strong-migrations-approve-next-line removeColumn renameColumn
+ALTER TABLE "users" DROP COLUMN "name";
+
+-- Approve all rules for a statement
+-- prisma-strong-migrations-approve-next-line
+ALTER TABLE "users" DROP COLUMN "name";
+```
+
 ## Configuration
 
 Create `prisma-strong-migrations.config.js` in your project root:
