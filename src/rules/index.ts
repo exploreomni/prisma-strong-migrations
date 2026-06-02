@@ -11,6 +11,7 @@ import { addUniqueConstraintRule } from "./add-unique-constraint";
 import { addExclusionConstraintRule } from "./add-exclusion-constraint";
 import { setNotNullRule } from "./set-not-null";
 import { addJsonColumnRule } from "./add-json-column";
+import { addArrayColumnWithoutNotNullRule } from "./add-array-column-without-not-null";
 import { addVolatileDefaultRule } from "./add-volatile-default";
 import { addAutoIncrementRule } from "./add-auto-increment";
 import { addStoredGeneratedRule } from "./add-stored-generated";
@@ -51,6 +52,7 @@ export const builtinRules: Rule[] = [
   addExclusionConstraintRule,
   setNotNullRule,
   addJsonColumnRule,
+  addArrayColumnWithoutNotNullRule,
   addVolatileDefaultRule,
   addAutoIncrementRule,
   addStoredGeneratedRule,

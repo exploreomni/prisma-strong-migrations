@@ -271,21 +271,24 @@ Potentially dangerous operations:
     - [Adding a json column](#adding-a-json-column)
       - [Bad](#bad-11)
       - [Good](#good-11)
-    - [Adding a column with a volatile default value](#adding-a-column-with-a-volatile-default-value)
+    - [Adding an array column without NOT NULL](#adding-an-array-column-without-not-null)
       - [Bad](#bad-12)
       - [Good](#good-12)
-    - [Adding an auto-incrementing column](#adding-an-auto-incrementing-column)
+    - [Adding a column with a volatile default value](#adding-a-column-with-a-volatile-default-value)
       - [Bad](#bad-13)
       - [Good](#good-13)
-    - [Adding a stored generated column](#adding-a-stored-generated-column)
+    - [Adding an auto-incrementing column](#adding-an-auto-incrementing-column)
       - [Bad](#bad-14)
       - [Good](#good-14)
-    - [Renaming a schema](#renaming-a-schema)
+    - [Adding a stored generated column](#adding-a-stored-generated-column)
       - [Bad](#bad-15)
       - [Good](#good-15)
-    - [Keeping non-unique indexes to three columns or less](#keeping-non-unique-indexes-to-three-columns-or-less)
+    - [Renaming a schema](#renaming-a-schema)
       - [Bad](#bad-16)
       - [Good](#good-16)
+    - [Keeping non-unique indexes to three columns or less](#keeping-non-unique-indexes-to-three-columns-or-less)
+      - [Bad](#bad-17)
+      - [Good](#good-17)
   - [Skipping Checks](#skipping-checks)
     - [Skip multiple rules](#skip-multiple-rules)
     - [Skip all rules for a statement](#skip-all-rules-for-a-statement)
@@ -638,6 +641,28 @@ In Prisma schema:
 model User {
   metadata Json @db.JsonB
 }
+```
+
+---
+
+### Adding an array column without NOT NULL
+
+#### Bad
+
+Prisma list fields like `savedColors String[]` are always non-nullable, but the generated SQL omits `NOT NULL` (with or without a default). The column ends up nullable in the database while Prisma treats it as non-nullable, so `NULL` can slip in.
+
+```sql
+ALTER TABLE "LandingPage" ADD COLUMN "savedColors" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Post" ADD COLUMN "tags" TEXT[];
+```
+
+#### Good
+
+Add `NOT NULL`. When a default exists, keep it; otherwise add an empty-array default so existing rows stay valid. This rule is auto-fixable (`--fix`).
+
+```sql
+ALTER TABLE "LandingPage" ADD COLUMN "savedColors" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Post" ADD COLUMN "tags" TEXT[] NOT NULL DEFAULT '{}';
 ```
 
 ---

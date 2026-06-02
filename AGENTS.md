@@ -385,15 +385,16 @@ fix: (stmt: ParsedStatement): FixResult => {
 
 #### Rules with auto-fix support
 
-| Rule                  | Fix behavior                                                                            |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| `addIndex`            | `CREATE INDEX` → `CREATE INDEX CONCURRENTLY` + disable-transaction header               |
-| `removeIndex`         | `DROP INDEX` → `DROP INDEX CONCURRENTLY` + disable-transaction header                   |
-| `addForeignKey`       | Add `NOT VALID` + append `VALIDATE CONSTRAINT` statement                                |
-| `addCheckConstraint`  | Add `NOT VALID` + append `VALIDATE CONSTRAINT` statement                                |
-| `setNotNull`          | Expand into 4 statements: CHECK NOT VALID → VALIDATE → SET NOT NULL → DROP CONSTRAINT   |
-| `addUniqueConstraint` | Replace with `CREATE UNIQUE INDEX CONCURRENTLY` + `ADD CONSTRAINT USING INDEX` + header |
-| `addJsonColumn`       | Replace `json` with `jsonb` in the raw SQL                                              |
+| Rule                           | Fix behavior                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `addIndex`                     | `CREATE INDEX` → `CREATE INDEX CONCURRENTLY` + disable-transaction header               |
+| `removeIndex`                  | `DROP INDEX` → `DROP INDEX CONCURRENTLY` + disable-transaction header                   |
+| `addForeignKey`                | Add `NOT VALID` + append `VALIDATE CONSTRAINT` statement                                |
+| `addCheckConstraint`           | Add `NOT VALID` + append `VALIDATE CONSTRAINT` statement                                |
+| `setNotNull`                   | Expand into 4 statements: CHECK NOT VALID → VALIDATE → SET NOT NULL → DROP CONSTRAINT   |
+| `addUniqueConstraint`          | Replace with `CREATE UNIQUE INDEX CONCURRENTLY` + `ADD CONSTRAINT USING INDEX` + header |
+| `addJsonColumn`                | Replace `json` with `jsonb` in the raw SQL                                              |
+| `addArrayColumnWithoutNotNull` | Add `NOT NULL` (and an empty-array default if the column has none)                      |
 
 See `.local-dev-docs/active/auto-fix-sql-proposal.md` for details.
 

@@ -1,0 +1,1 @@
+ALTER TABLE "LandingPage" ADD COLUMN     "savedColors" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

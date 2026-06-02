@@ -406,6 +406,39 @@ model User {
 
 ---
 
+### addArrayColumnWithoutNotNull
+
+**Adding an array column without NOT NULL**
+
+#### Detection Pattern
+
+```sql
+ALTER TABLE "LandingPage" ADD COLUMN "savedColors" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Post" ADD COLUMN "tags" TEXT[];
+```
+
+Prisma list fields such as `savedColors String[]` are always non-nullable, but
+the generated SQL omits `NOT NULL` (with or without a default).
+
+#### Why It's Dangerous
+
+- Prisma treats a list field (`String[]`) as non-nullable, but the column above is nullable in the database
+- This mismatch lets `NULL` slip into a column the application never expects to be null
+
+#### Safe Approach
+
+Add `NOT NULL`. When the column has a default, keep it; when it does not, add an
+empty-array default so existing rows stay valid:
+
+```sql
+ALTER TABLE "LandingPage" ADD COLUMN "savedColors" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "Post" ADD COLUMN "tags" TEXT[] NOT NULL DEFAULT '{}';
+```
+
+This rule is auto-fixable (`--fix`).
+
+---
+
 ### addVolatileDefault
 
 **Adding column with volatile default value**
