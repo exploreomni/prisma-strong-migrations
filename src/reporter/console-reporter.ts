@@ -32,6 +32,10 @@ export const consoleReport = (results: CheckResult[]): void => {
             .join("\n"),
         ),
       );
+      if (rule.fix) {
+        console.log();
+        console.log(`  ${chalk.cyan("🔧 auto-fixable — run with --fix")}`);
+      }
       console.log(chalk.dim("─".repeat(60)));
     }
   }

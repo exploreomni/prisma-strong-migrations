@@ -9,6 +9,7 @@ export const jsonReport = (results: CheckResult[]): JsonReport => {
     line: result.statement.line,
     message: result.message,
     suggestion: result.suggestion,
+    fixable: result.rule.fix !== undefined,
   });
 
   const violations = results.filter((r) => !r.approved);

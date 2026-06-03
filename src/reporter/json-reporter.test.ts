@@ -57,4 +57,23 @@ describe("jsonReport", () => {
       totalWarnings: 0,
     });
   });
+
+  it("sets fixable from the rule's fix method", () => {
+    const fixableRule: Rule = {
+      ...rule("addIndex", "error"),
+      fix: () => ({ statements: [], requiresDisableTransaction: false }),
+    };
+    const statement: ParsedStatement = {
+      type: "createIndex",
+      raw: "CREATE INDEX ...",
+      line: 1,
+      migrationPath: "migration.sql",
+    };
+    const report = jsonReport([
+      { rule: fixableRule, statement, message: "m", suggestion: "s", approved: false },
+      result("removeColumn", "error", 2),
+    ]);
+    expect(report.errors.find((e) => e.ruleName === "addIndex")?.fixable).toBe(true);
+    expect(report.errors.find((e) => e.ruleName === "removeColumn")?.fixable).toBe(false);
+  });
 });

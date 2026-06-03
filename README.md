@@ -135,7 +135,8 @@ The `--format json` output shape:
       "migrationPath": "prisma/migrations/...",
       "line": 3,
       "message": "...",
-      "suggestion": "..."
+      "suggestion": "...",
+      "fixable": true
     }
   ],
   "warnings": [],

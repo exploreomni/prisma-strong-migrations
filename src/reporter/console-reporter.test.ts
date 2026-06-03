@@ -32,6 +32,7 @@ const captureOutput = (results: CheckResult[]): string => {
   const spy = vi.spyOn(console, "log").mockImplementation(() => {});
   consoleReport(results);
   const output = spy.mock.calls.map((c) => c.join(" ")).join("\n");
+  spy.mockRestore();
   return output;
 };
 
@@ -59,5 +60,19 @@ describe("consoleReport", () => {
   it("shows no-issues message when there are no results", () => {
     const output = captureOutput([]);
     expect(output).toContain("No issues found");
+  });
+
+  it("shows the auto-fixable hint only for rules with a fix method", () => {
+    const fixable = result("addIndex", "error");
+    fixable.rule = {
+      ...fixable.rule,
+      fix: () => ({ statements: [], requiresDisableTransaction: false }),
+    };
+    const fixableOut = captureOutput([fixable]);
+    expect(fixableOut).toContain("auto-fixable");
+    expect(fixableOut).toContain("--fix");
+
+    const plainOut = captureOutput([result("removeColumn", "error")]);
+    expect(plainOut).not.toContain("auto-fixable");
   });
 });

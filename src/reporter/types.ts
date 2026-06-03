@@ -5,6 +5,8 @@ export interface ReportItem {
   line: number;
   message: string;
   suggestion: string;
+  /** True when the rule can auto-fix this finding via `--fix`. */
+  fixable: boolean;
 }
 
 export interface JsonReport {
