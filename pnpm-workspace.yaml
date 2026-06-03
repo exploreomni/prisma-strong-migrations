@@ -1,3 +1,7 @@
 packages:
   - "."
   - "example"
+
+# Supply chain hardening
+minimumReleaseAge: 4320 # only install package versions published at least 3 days ago (minutes)
+ignoreScripts: true # do not run dependency lifecycle scripts on install
