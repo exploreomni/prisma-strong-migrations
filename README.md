@@ -620,6 +620,8 @@ ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL;
 ALTER TABLE "users" DROP CONSTRAINT "users_email_not_null";
 ```
 
+Also give the column a default value if it has none — otherwise you cannot drop it safely later: once its field is marked `@ignore`, Prisma Client omits it from INSERTs and those inserts fail without a default.
+
 ---
 
 ### Adding a json column
@@ -809,7 +811,7 @@ CREATE INDEX CONCURRENTLY "users_email_idx" ON "users"("email");
 
 #### Bad
 
-Adding a NOT NULL column without a default value fails if the table has existing rows.
+Adding a NOT NULL column without a default value fails if the table has existing rows. It also blocks a safe removal later: once you mark its field `@ignore` to drop it, Prisma Client INSERTs that omit the column will fail without a default.
 
 ```sql
 ALTER TABLE "users" ADD COLUMN "status" text NOT NULL;
@@ -817,18 +819,10 @@ ALTER TABLE "users" ADD COLUMN "status" text NOT NULL;
 
 #### Good
 
-Add the column with a temporary default value, then remove it if needed.
-
-**Migration 1:**
+Give the column a default value (or add `@default(...)` in the Prisma schema before generating the migration).
 
 ```sql
 ALTER TABLE "users" ADD COLUMN "status" text NOT NULL DEFAULT 'active';
-```
-
-**Migration 2** (optional — remove the default after backfilling):
-
-```sql
-ALTER TABLE "users" ALTER COLUMN "status" DROP DEFAULT;
 ```
 
 ---

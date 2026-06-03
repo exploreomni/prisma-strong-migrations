@@ -24,6 +24,11 @@ const suggestion = (statement: ParsedStatement): string => {
    4. Drop the temporary check constraint:
       ALTER TABLE "${statement.table}" DROP CONSTRAINT "${statement.table}_${statement.column}_not_null";
 
+   Also give the column a default value if it has none — otherwise you cannot drop it
+   safely later: once its field is marked @ignore, Prisma Client omits it from INSERTs
+   and those inserts fail without a default:
+      ALTER TABLE "${statement.table}" ALTER COLUMN "${statement.column}" SET DEFAULT <value>;
+
 To approve this operation (reviewed and intentional), add above the statement:
    -- prisma-strong-migrations-approve-next-line setNotNull
 

@@ -369,6 +369,12 @@ ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL;
 ALTER TABLE "users" DROP CONSTRAINT "users_email_not_null";
 ```
 
+Also give the column a default value if it has none — otherwise you cannot drop it safely later: once its field is marked `@ignore`, Prisma Client omits it from INSERTs and those inserts fail without a default.
+
+```sql
+ALTER TABLE "users" ALTER COLUMN "email" SET DEFAULT '';
+```
+
 ---
 
 ### addJsonColumn
@@ -650,22 +656,17 @@ ALTER TABLE "users" ADD COLUMN "status" text NOT NULL;
 
 - Prisma generates this SQL when a required field (no `?`) without `@default` is added to a model
 - PostgreSQL rejects this statement if the table already has existing rows
+- To remove the column later you mark its field `@ignore`; Prisma Client then omits it from INSERTs, and with no default those inserts fail — so the column cannot be dropped safely
 
 #### Safe Approach
 
-**Migration 1**: Add column with a temporary default value
+Give the column a default value:
 
 ```sql
 ALTER TABLE "users" ADD COLUMN "status" text NOT NULL DEFAULT 'active';
 ```
 
-**Migration 2**: Remove the default if it was only needed for backfill
-
-```sql
-ALTER TABLE "users" ALTER COLUMN "status" DROP DEFAULT;
-```
-
-Alternatively, add `@default(...)` to the Prisma schema before generating the migration, then remove it after deploying.
+Alternatively, add `@default(...)` to the field in the Prisma schema before generating the migration.
 
 #### How to Skip
 

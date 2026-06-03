@@ -11,23 +11,22 @@ const detect = (statement: ParsedStatement, _context: CheckContext): boolean => 
 };
 
 const message = (statement: ParsedStatement): string => {
-  return `Adding NOT NULL column "${statement.column}" without a default value will fail if the table has existing rows`;
+  return `Adding NOT NULL column "${statement.column}" on table "${statement.table}" without a default value will fail on a table with existing rows`;
 };
 
 const suggestion = (statement: ParsedStatement): string => {
   return `
-❌ Bad: Adding a NOT NULL column without a default value fails on tables with existing rows
+❌ Bad: A NOT NULL column without a default value is unsafe:
+   - Adding it fails on a table that already has rows
+   - To remove the column later you mark its field @ignore; Prisma Client then omits it
+     from INSERTs, and with no default those inserts fail — so the column cannot be dropped safely
 
-✅ Good: Add the column with a temporary default value, then remove it if needed:
-
-   Migration 1 — Add column with a default value:
+✅ Good: Give the column a default value:
+      ALTER TABLE "${statement.table}" ALTER COLUMN "${statement.column}" SET DEFAULT <value>;
+   or define it with a default when adding the column:
       ALTER TABLE "${statement.table}" ADD COLUMN "${statement.column}" <type> NOT NULL DEFAULT <value>;
 
-   Migration 2 — Remove the default if it was only needed for backfill:
-      ALTER TABLE "${statement.table}" ALTER COLUMN "${statement.column}" DROP DEFAULT;
-
-   Or add @default(...) to your Prisma schema before generating the migration,
-   then remove it after deploying.
+   You can also add @default(...) to the field in schema.prisma before generating the migration.
 
 To approve this operation (reviewed and intentional), add above the statement:
    -- prisma-strong-migrations-approve-next-line addNotNullWithoutDefault
@@ -41,7 +40,7 @@ export const addNotNullWithoutDefaultRule: Rule = {
   name: "addNotNullWithoutDefault",
   severity: "error",
   description:
-    "Adding a NOT NULL column without a default value will fail on tables with existing rows",
+    "A NOT NULL column without a default value fails on existing rows and blocks safe removal via @ignore",
   detect,
   message,
   suggestion,

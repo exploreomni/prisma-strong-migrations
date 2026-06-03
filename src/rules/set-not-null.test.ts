@@ -53,4 +53,20 @@ describe("setNotNullRule", () => {
       expect(setNotNullRule.detect(stmt, mockContext)).toBe(false);
     });
   });
+
+  describe("suggestion", () => {
+    it("advises giving the column a default for safe later removal via @ignore", () => {
+      const stmt: ParsedStatement = {
+        type: "alterTable",
+        action: "alterColumnSetNotNull",
+        raw: 'ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL;',
+        line: 1,
+        table: "users",
+        column: "email",
+      };
+      const suggestion = setNotNullRule.suggestion(stmt);
+      expect(suggestion).toContain("@ignore");
+      expect(suggestion).toContain("SET DEFAULT");
+    });
+  });
 });
