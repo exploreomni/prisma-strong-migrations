@@ -95,4 +95,33 @@ describe("addNotNullWithoutDefaultRule", () => {
       expect(addNotNullWithoutDefaultRule.message(stmt)).toContain("status");
     });
   });
+
+  describe("suggestion", () => {
+    const stmt: ParsedStatement = {
+      type: "alterTable",
+      raw: 'ALTER TABLE "users" ADD COLUMN "status" text NOT NULL;',
+      line: 1,
+      table: "users",
+      action: "addColumn",
+      column: "status",
+      dataType: "text",
+      notNull: true,
+    };
+
+    it("offers the constant-default path", () => {
+      expect(addNotNullWithoutDefaultRule.suggestion(stmt)).toContain("DEFAULT");
+    });
+
+    it("offers the nullable-then-backfill path for app-supplied values", () => {
+      const suggestion = addNotNullWithoutDefaultRule.suggestion(stmt);
+      expect(suggestion).toContain("SET NOT NULL");
+      expect(suggestion).toContain("Backfill");
+    });
+
+    it("includes the table and column names", () => {
+      const suggestion = addNotNullWithoutDefaultRule.suggestion(stmt);
+      expect(suggestion).toContain("users");
+      expect(suggestion).toContain("status");
+    });
+  });
 });
