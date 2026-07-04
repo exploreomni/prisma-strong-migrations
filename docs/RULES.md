@@ -637,13 +637,25 @@ ALTER TABLE "users" ADD COLUMN "status" text NOT NULL;
 
 #### Safe Approach
 
-Give the column a default value:
+**Option 1 — a sensible constant applies to every existing row.** Give the column a default value. On PostgreSQL 11+ a constant default is a fast, metadata-only change even on large tables:
 
 ```sql
 ALTER TABLE "users" ADD COLUMN "status" text NOT NULL DEFAULT 'active';
 ```
 
 Alternatively, add `@default(...)` to the field in the Prisma schema before generating the migration.
+
+**Option 2 — each row needs an application-supplied value (e.g. a foreign key).** Don't invent a default. Add the column as nullable, backfill it, then enforce `NOT NULL` in a separate migration:
+
+```sql
+-- Migration 1: add as nullable
+ALTER TABLE "users" ADD COLUMN "status" text;
+
+-- Backfill existing rows (application code or a batched UPDATE)
+
+-- Migration 2: enforce NOT NULL (see the setNotNull rule for doing this without a long lock)
+ALTER TABLE "users" ALTER COLUMN "status" SET NOT NULL;
+```
 
 #### How to Skip
 
