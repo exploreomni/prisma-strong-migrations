@@ -554,29 +554,6 @@ ALTER SCHEMA "old_schema" RENAME TO "new_schema";
 
 ---
 
-### create_table_force
-
-**Dropping existing table before creating**
-
-#### Detection Pattern
-
-```sql
-DROP TABLE IF EXISTS "users";
-CREATE TABLE "users" (...);
-```
-
-#### Why It's Dangerous
-
-- Existing data is lost
-- Potential for unintended data loss
-
-#### Safe Approach
-
-- Explicitly execute `DROP TABLE` with full understanding of the impact
-- Or only create table if it doesn't exist
-
----
-
 ### dropTable
 
 **Dropping a table**
