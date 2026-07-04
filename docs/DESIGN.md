@@ -449,33 +449,56 @@ export const defaultConfig: Config = {
 
 ## Rule List
 
-### Dangerous Operations (Error)
+Total: 39 rules (33 error, 6 warning). See [RULES.md](./RULES.md) for the full details of each rule.
 
-| Name                       | Detection Pattern                                | Reason               |
-| -------------------------- | ------------------------------------------------ | -------------------- |
-| `remove_column`            | `DROP COLUMN`                                    | Application errors   |
-| `rename_column`            | `RENAME COLUMN`                                  | Application errors   |
-| `rename_table`             | `RENAME TO` (table)                              | Application errors   |
-| `change_column_type`       | `ALTER COLUMN ... TYPE`                          | Table rewrite        |
-| `add_index`                | `CREATE INDEX` (non-CONCURRENTLY)                | Write blocking       |
-| `remove_index`             | `DROP INDEX` (non-CONCURRENTLY)                  | Write blocking       |
-| `add_foreign_key`          | `ADD CONSTRAINT ... FOREIGN KEY` (non-NOT VALID) | Both tables locked   |
-| `add_check_constraint`     | `ADD CONSTRAINT ... CHECK` (non-NOT VALID)       | Full row check       |
-| `add_unique_constraint`    | `ADD CONSTRAINT ... UNIQUE`                      | Read/write blocking  |
-| `add_exclusion_constraint` | `ADD CONSTRAINT ... EXCLUDE`                     | Full row check       |
-| `set_not_null`             | `SET NOT NULL`                                   | Full row check       |
-| `add_json_column`          | `ADD COLUMN ... json`                            | No equality operator |
-| `add_volatile_default`     | `DEFAULT gen_random_uuid()` etc.                 | Table rewrite        |
-| `add_auto_increment`       | `SERIAL`, `BIGSERIAL`                            | Table rewrite        |
-| `add_stored_generated`     | `GENERATED ALWAYS AS ... STORED`                 | Table rewrite        |
-| `rename_schema`            | `ALTER SCHEMA ... RENAME`                        | Application errors   |
-| `create_table_force`       | `DROP TABLE IF EXISTS` + `CREATE TABLE`          | Data loss            |
+### Errors (severity: `error`)
 
-### Best Practices (Warning)
+| Name                                     | Detection Pattern                                 | Reason                                |
+| ---------------------------------------- | ------------------------------------------------- | ------------------------------------- |
+| `removeColumn`                           | `DROP COLUMN`                                     | Application errors                    |
+| `renameColumn`                           | `RENAME COLUMN`                                   | Application errors                    |
+| `renameTable`                            | `ALTER TABLE ... RENAME TO`                       | Application errors                    |
+| `renameSchema`                           | `ALTER SCHEMA ... RENAME`                         | Application errors                    |
+| `changeColumnType`                       | `ALTER COLUMN ... TYPE`                           | Table rewrite / app errors            |
+| `dropTable`                              | `DROP TABLE`                                      | Data loss + app errors                |
+| `addIndex`                               | `CREATE INDEX` (non-CONCURRENTLY)                 | Write blocking                        |
+| `removeIndex`                            | `DROP INDEX` (non-CONCURRENTLY)                   | Write blocking                        |
+| `addForeignKey`                          | `ADD CONSTRAINT ... FOREIGN KEY` (non-NOT VALID)  | Both tables locked                    |
+| `addCheckConstraint`                     | `ADD CONSTRAINT ... CHECK` (non-NOT VALID)        | Full-table validation lock            |
+| `addUniqueConstraint`                    | `ADD CONSTRAINT ... UNIQUE`                       | Read/write blocking                   |
+| `addExclusionConstraint`                 | `ADD CONSTRAINT ... EXCLUDE`                      | Full-table check lock                 |
+| `setNotNull`                             | `ALTER COLUMN ... SET NOT NULL`                   | Full-table scan lock                  |
+| `addJsonColumn`                          | `ADD COLUMN ... json`                             | No equality operator (use jsonb)      |
+| `addArrayColumnWithoutNotNull`           | `ADD COLUMN ... <type>[]` without `NOT NULL`      | Prisma list fields are non-nullable   |
+| `addVolatileDefault`                     | `ADD COLUMN ... DEFAULT gen_random_uuid()` etc.   | Table rewrite                         |
+| `addNotNullWithoutDefault`               | `ADD COLUMN ... NOT NULL` without `DEFAULT`       | Fails on existing rows                |
+| `addAutoIncrement`                       | `SERIAL`, `BIGSERIAL`                             | Table lock / rewrite                  |
+| `addStoredGenerated`                     | `GENERATED ALWAYS AS ... STORED`                  | Table rewrite                         |
+| `truncateTable`                          | `TRUNCATE`                                        | Data loss + AccessExclusiveLock       |
+| `setTablespace`                          | `SET TABLESPACE`                                  | Table rewrite + AccessExclusiveLock   |
+| `clusterTable`                           | `CLUSTER`                                         | Table rewrite + AccessExclusiveLock   |
+| `disableTrigger`                         | `DISABLE TRIGGER`                                 | Bypasses constraint checks            |
+| `vacuumInMigration`                      | `VACUUM`                                          | Fails inside a transaction            |
+| `concurrentWithoutDisableTransaction`    | `CONCURRENTLY` without disable-transaction header | Fails inside a transaction            |
+| `notValidValidateSameFile`               | `NOT VALID` + `VALIDATE CONSTRAINT` in same file  | Negates NOT VALID lock optimization   |
+| `mixedStatementsWithDisabledTransaction` | Multiple statements + disabled transaction        | No rollback protection                |
+| `backfillInMigration`                    | `UPDATE` mixed with schema changes                | Should be a separate migration        |
+| `enumValueRemoval`                       | ENUM value removed (type recreation)              | Fails if existing data uses the value |
+| `implicitM2mTableChange`                 | Modify `_AToB` implicit M2M join table            | Breaks Prisma relation management     |
+| `intPrimaryKey`                          | `SERIAL` / `INT` `PRIMARY KEY` (32-bit)           | ID exhaustion risk at scale           |
+| `cuidUuidDefaultRemoval`                 | `ALTER COLUMN ... DROP DEFAULT` on id column      | Breaks Prisma ID generation           |
+| `prismaManagedColumnChange`              | DB-level change to `@updatedAt` column            | Conflicts with Prisma Client          |
 
-| Name                  | Detection Pattern                | Reason      |
-| --------------------- | -------------------------------- | ----------- |
-| `index_columns_count` | Non-unique index with 4+ columns | Performance |
+### Warnings (severity: `warning`)
+
+| Name                        | Detection Pattern                                | Reason                            |
+| --------------------------- | ------------------------------------------------ | --------------------------------- |
+| `updateWithoutWhere`        | `UPDATE` without `WHERE`                         | Affects all rows                  |
+| `deleteWithoutWhere`        | `DELETE FROM` without `WHERE`                    | Deletes all rows                  |
+| `createTableAsSelect`       | `CREATE TABLE ... AS SELECT`                     | Long-running on large tables      |
+| `disableTransactionWarning` | `prisma-migrate-disable-next-transaction` header | Partial state on failure          |
+| `implicitM2mRelation`       | Implicit M2M join table (`_AToB`) created        | Explicit M2M relation recommended |
+| `indexColumnsCount`         | Non-unique index with 4+ columns                 | Write performance                 |
 
 ## Skipping Warnings
 
