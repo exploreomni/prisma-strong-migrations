@@ -56,11 +56,11 @@ error [removeColumn] line 1
 | Feature                                      | prisma-strong-migrations | squawk | Prisma built-in    |
 | -------------------------------------------- | ------------------------ | ------ | ------------------ |
 | Prisma-specific rules                        | ✅ 13 rules              | ❌     | ❌                 |
-| Auto-fix (`--fix`)                           | ✅ 6 rules               | ❌     | ❌                 |
+| Auto-fix (`--fix`)                           | ✅ 7 rules               | ❌     | ❌                 |
 | Custom rules (JS/TS)                         | ✅                       | ❌     | ❌                 |
 | `migrate dev` / `migrate deploy` integration | ✅                       | ❌     | ✅                 |
 | Inline skip with audit trail                 | ✅                       | ❌     | ❌                 |
-| Total rules                                  | 38                       | ~26    | syntax errors only |
+| Total rules                                  | 39                       | ~26    | syntax errors only |
 
 [squawk](https://squawkhq.com/) is a general-purpose PostgreSQL SQL linter. It catches common dangerous patterns but has no awareness of Prisma's migration conventions — such as the implicit transaction wrapper, `CONCURRENTLY` requirements, or Prisma-managed tables like `_AToB` join tables.
 
