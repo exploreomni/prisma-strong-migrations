@@ -240,16 +240,27 @@ function convertDropIndex(statement: DropStatement, raw: string, line: number): 
   };
 }
 
-function convertDropTable(statement: DropStatement, raw: string, line: number): ParsedStatement {
-  return {
+// `DROP TABLE "a", "b"` drops every named table, so emit one statement per name —
+// otherwise rules only ever see the first table.
+function convertDropTable(
+  statement: DropStatement,
+  raw: string,
+  line: number,
+): ParsedStatement[] | null {
+  if (statement.names.length === 0) return null;
+  return statement.names.map((name) => ({
     type: "dropTable",
     raw,
     line,
-    table: statement.names[0]?.name,
-  };
+    table: name.name,
+  }));
 }
 
-function convertStatement(statement: Statement, raw: string, line: number): ParsedStatement | null {
+function convertStatement(
+  statement: Statement,
+  raw: string,
+  line: number,
+): ParsedStatement | ParsedStatement[] | null {
   switch (statement.type) {
     case "alter table":
       return convertAlterTable(statement as AlterTableStatement, raw, line);
@@ -628,6 +639,12 @@ function buildDisableTransactionStatements(sql: string): ParsedStatement[] {
   return results;
 }
 
+/** A converter may produce zero, one, or several statements (e.g. multi-table DROP TABLE). */
+function toStatements(parsed: ParsedStatement | ParsedStatement[] | null): ParsedStatement[] {
+  if (!parsed) return [];
+  return Array.isArray(parsed) ? parsed : [parsed];
+}
+
 export function parseSql(sql: string): ParsedStatement[] {
   const disableMap = buildDisableMap(sql);
   const approveMap = buildApproveMap(sql);
@@ -655,7 +672,7 @@ export function parseSql(sql: string): ParsedStatement[] {
       if (!statement._location) return [];
       const { raw, line } = getRawTextAndLine(sql, statement._location);
       const parsed = convertStatement(statement, raw, line) ?? parseWithRegexFallback(raw, line);
-      return parsed ? [applyDirectiveComments(parsed)] : [];
+      return toStatements(parsed).map(applyDirectiveComments);
     });
     return [...disableTransactionStatements, ...sqlStatements];
   } catch {
@@ -684,7 +701,7 @@ export function parseSql(sql: string): ParsedStatement[] {
         if (ast[0]) {
           const parsed =
             convertStatement(ast[0], trimmed, line) ?? parseWithRegexFallback(stripped, line);
-          return parsed ? [applyDirectiveComments(parsed)] : [];
+          return toStatements(parsed).map(applyDirectiveComments);
         }
       } catch {
         // AST parse failed → try regex patterns
