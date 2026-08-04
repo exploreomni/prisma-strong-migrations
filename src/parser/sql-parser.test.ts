@@ -185,6 +185,50 @@ describe("parseSql", () => {
     });
   });
 
+  describe("DROP TABLE", () => {
+    it("single table → one dropTable", () => {
+      const results = parseSql(`DROP TABLE "users";`);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        type: "dropTable",
+        table: "users",
+        line: 1,
+      });
+    });
+
+    it("multiple tables → one dropTable per table", () => {
+      const results = parseSql(`DROP TABLE "a", "b", "c";`);
+      expect(results).toHaveLength(3);
+      expect(results.map((r) => r.table)).toEqual(["a", "b", "c"]);
+      for (const result of results) {
+        expect(result.type).toBe("dropTable");
+        expect(result.line).toBe(1);
+        expect(result.raw).toBe(`DROP TABLE "a", "b", "c";`);
+      }
+    });
+
+    it("multiple tables in the slow path → one dropTable per table", () => {
+      // The NOT VALID constraint makes the whole-file parse fail, forcing the
+      // per-statement fallback path.
+      const sql = `ALTER TABLE "orders" ADD CONSTRAINT "c" CHECK ("total" > 0) NOT VALID;
+DROP TABLE "a", "b";`;
+      const results = parseSql(sql);
+      const dropped = results.filter((r) => r.type === "dropTable");
+      expect(dropped.map((r) => r.table)).toEqual(["a", "b"]);
+      expect(dropped.map((r) => r.line)).toEqual([2, 2]);
+    });
+
+    it("disable comment applies to every table in a multi-table drop", () => {
+      const sql = `-- prisma-strong-migrations-disable-next-line dropTable
+DROP TABLE "a", "b";`;
+      const results = parseSql(sql);
+      expect(results).toHaveLength(2);
+      for (const result of results) {
+        expect(result.disabled).toEqual(["dropTable"]);
+      }
+    });
+  });
+
   describe("disable comment", () => {
     it("disable-next-line → disabled populated for next stmt", () => {
       const sql = `-- prisma-strong-migrations-disable-next-line remove_column
