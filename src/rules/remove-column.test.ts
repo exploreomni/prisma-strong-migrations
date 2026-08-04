@@ -53,4 +53,25 @@ describe("removeColumnRule", () => {
       expect(removeColumnRule.detect(stmt, mockContext)).toBe(false);
     });
   });
+
+  describe("suggestion", () => {
+    const stmt: ParsedStatement = {
+      type: "alterTable",
+      action: "dropColumn",
+      raw: 'ALTER TABLE "users" DROP COLUMN "name";',
+      line: 1,
+      table: "users",
+      column: "name",
+    };
+
+    it("describes the @ignore-then-drop sequence", () => {
+      const suggestion = removeColumnRule.suggestion(stmt);
+      expect(suggestion).toContain("@ignore");
+      expect(suggestion).toContain("name");
+    });
+
+    it("does not link out to external URLs", () => {
+      expect(removeColumnRule.suggestion(stmt)).not.toMatch(/https?:\/\//);
+    });
+  });
 });
