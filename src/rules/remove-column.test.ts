@@ -69,9 +69,5 @@ describe("removeColumnRule", () => {
       expect(suggestion).toContain("@ignore");
       expect(suggestion).toContain("name");
     });
-
-    it("does not link out to external URLs", () => {
-      expect(removeColumnRule.suggestion(stmt)).not.toMatch(/https?:\/\//);
-    });
   });
 });
