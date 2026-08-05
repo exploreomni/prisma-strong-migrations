@@ -523,19 +523,53 @@ function parseWithRegexFallback(sql: string, line: number): ParsedStatement | nu
 
 // ---- Statement splitter (used when full-file parse fails) ----
 
+// Opening tag of a dollar-quoted string: $$ or $tag$. Sticky so it can be tested
+// at a given offset without slicing the rest of the file.
+const DOLLAR_TAG_PATTERN = /\$(?:[A-Za-z_]\w*)?\$/y;
+
+interface SplitStatement {
+  text: string;
+  offset: number;
+  /** Set when the statement holds a `$tag$` that is never closed. See `parseSql`. */
+  unterminatedDollarQuote?: boolean;
+}
+
 /**
- * Split SQL text into individual statements, respecting string literals and comments.
+ * Split SQL text into individual statements, respecting string literals, comments,
+ * and dollar-quoted bodies.
  * Returns each statement's text and its start offset in the original SQL.
  */
-function splitIntoStatements(sql: string): Array<{ text: string; offset: number }> {
-  const statements: Array<{ text: string; offset: number }> = [];
+function splitIntoStatements(sql: string): SplitStatement[] {
+  const statements: SplitStatement[] = [];
   let statementStart = 0;
   let position = 0;
   let insideString = false;
   let stringDelimiter = "";
+  let unterminatedDollarQuote = false;
 
   while (position < sql.length) {
     const character = sql[position];
+
+    // Skip dollar-quoted bodies ($$ ... $$ / $tag$ ... $tag$). Semicolons inside a
+    // plpgsql body are not statement boundaries, and handing pgsql-ast-parser a body
+    // cut off mid-expression is exponentially slow — a handful of `||` terms hangs it.
+    if (!insideString && character === "$") {
+      DOLLAR_TAG_PATTERN.lastIndex = position;
+      const tagMatch = DOLLAR_TAG_PATTERN.exec(sql);
+      if (tagMatch) {
+        const tag = tagMatch[0];
+        const closeIndex = sql.indexOf(tag, position + tag.length);
+        // No closing tag: consume to end of file like Postgres' lexer does. Resuming
+        // mid-body would recreate exactly the fragments this guard exists to avoid.
+        if (closeIndex === -1) {
+          unterminatedDollarQuote = true;
+          position = sql.length;
+        } else {
+          position = closeIndex + tag.length;
+        }
+        continue;
+      }
+    }
 
     // Skip line comments (-- ...)
     if (!insideString && character === "-" && sql[position + 1] === "-") {
@@ -576,7 +610,13 @@ function splitIntoStatements(sql: string): Array<{ text: string; offset: number 
   }
 
   const trailingText = sql.slice(statementStart).trim();
-  if (trailingText) statements.push({ text: trailingText, offset: statementStart });
+  if (trailingText) {
+    statements.push({
+      text: trailingText,
+      offset: statementStart,
+      ...(unterminatedDollarQuote ? { unterminatedDollarQuote } : {}),
+    });
+  }
 
   return statements;
 }
@@ -665,25 +705,33 @@ export function parseSql(sql: string): ParsedStatement[] {
   const disableTransactionStatements =
     buildDisableTransactionStatements(sql).map(applyDirectiveComments);
 
+  const splitStatements = splitIntoStatements(sql);
+  // An unclosed $tag$ is malformed SQL that pgsql-ast-parser cannot parse, and it
+  // backtracks exponentially while failing — enough `||` terms in the body and it
+  // never returns. Skip the AST entirely and let the regex patterns handle it.
+  const hasUnterminatedDollarQuote = splitStatements.some((s) => s.unterminatedDollarQuote);
+
   // Fast path: parse the whole file at once
-  try {
-    const { ast } = parseWithComments(sql, { locationTracking: true });
-    const sqlStatements = ast.flatMap((statement) => {
-      if (!statement._location) return [];
-      const { raw, line } = getRawTextAndLine(sql, statement._location);
-      const parsed = convertStatement(statement, raw, line) ?? parseWithRegexFallback(raw, line);
-      return toStatements(parsed).map(applyDirectiveComments);
-    });
-    return [...disableTransactionStatements, ...sqlStatements];
-  } catch {
-    // pgsql-ast-parser failed on the whole file (e.g. EXCLUDE constraints, NOT VALID)
-    // Fall back to parsing each statement individually
+  if (!hasUnterminatedDollarQuote) {
+    try {
+      const { ast } = parseWithComments(sql, { locationTracking: true });
+      const sqlStatements = ast.flatMap((statement) => {
+        if (!statement._location) return [];
+        const { raw, line } = getRawTextAndLine(sql, statement._location);
+        const parsed = convertStatement(statement, raw, line) ?? parseWithRegexFallback(raw, line);
+        return toStatements(parsed).map(applyDirectiveComments);
+      });
+      return [...disableTransactionStatements, ...sqlStatements];
+    } catch {
+      // pgsql-ast-parser failed on the whole file (e.g. EXCLUDE constraints, NOT VALID)
+      // Fall back to parsing each statement individually
+    }
   }
 
   // Slow path: split into individual statements and parse each one
   return [
     ...disableTransactionStatements,
-    ...splitIntoStatements(sql).flatMap(({ text, offset }) => {
+    ...splitStatements.flatMap(({ text, offset, unterminatedDollarQuote }) => {
       const trimmed = text.trim().replace(/;$/, "");
       if (!trimmed) return [];
 
@@ -696,15 +744,17 @@ export function parseSql(sql: string): ParsedStatement[] {
       if (!stripped) return [];
 
       // Try AST parse for this single statement
-      try {
-        const { ast } = parseWithComments(stripped + ";", { locationTracking: true });
-        if (ast[0]) {
-          const parsed =
-            convertStatement(ast[0], trimmed, line) ?? parseWithRegexFallback(stripped, line);
-          return toStatements(parsed).map(applyDirectiveComments);
+      if (!unterminatedDollarQuote) {
+        try {
+          const { ast } = parseWithComments(stripped + ";", { locationTracking: true });
+          if (ast[0]) {
+            const parsed =
+              convertStatement(ast[0], trimmed, line) ?? parseWithRegexFallback(stripped, line);
+            return toStatements(parsed).map(applyDirectiveComments);
+          }
+        } catch {
+          // AST parse failed → try regex patterns
         }
-      } catch {
-        // AST parse failed → try regex patterns
       }
 
       const parsed = parseWithRegexFallback(stripped, line);

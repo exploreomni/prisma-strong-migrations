@@ -459,4 +459,61 @@ CREATE INDEX CONCURRENTLY "idx" ON "orders"("status");`;
       });
     });
   });
+
+  describe("dollar-quoted bodies", () => {
+    // CREATE TRIGGER makes the whole-file parse throw, so these all take the
+    // per-statement splitting path.
+    const migration = (tag: string, body: string) => `CREATE FUNCTION f() RETURNS trigger AS ${tag}
+BEGIN
+${body}
+END;
+${tag} LANGUAGE plpgsql;
+
+CREATE TRIGGER t BEFORE INSERT ON "docs" FOR EACH ROW EXECUTE FUNCTION f();
+ALTER TABLE "users" DROP COLUMN "name";`;
+
+    it("does not report statements from inside a $$ body", () => {
+      const body = `  DELETE FROM "audit_log";\n  DELETE FROM "sessions";`;
+      const results = parseSql(migration("$$", body));
+      expect(results).toHaveLength(2);
+      expect(results[0]).toMatchObject({ type: "createTrigger", table: "docs", line: 8 });
+      expect(results[1]).toMatchObject({ type: "alterTable", action: "dropColumn", line: 9 });
+    });
+
+    it("does not report statements from inside a named $tag$ body", () => {
+      const body = `  DELETE FROM "audit_log";\n  DELETE FROM "sessions";`;
+      const results = parseSql(migration("$fn$", body));
+      expect(results).toHaveLength(2);
+      expect(results[0]).toMatchObject({ type: "createTrigger", table: "docs" });
+      expect(results[1]).toMatchObject({ type: "alterTable", action: "dropColumn" });
+    });
+
+    const concat = (count: number) =>
+      Array.from({ length: count }, (_, i) => `coalesce(NEW.c${i},'')`).join(" || ' ' || ");
+
+    // A body cut mid-expression sends pgsql-ast-parser exponential: 6 `||` terms took
+    // ~46s, and real full-text-search trigger migrations have more.
+    it("stays fast on a body with many || terms", () => {
+      const body = `  NEW.tsv := to_tsvector('simple', ${concat(12)});`;
+      const results = parseSql(migration("$$", body));
+      expect(results).toHaveLength(2);
+      expect(results[1]).toMatchObject({ type: "alterTable", action: "dropColumn" });
+    }, 5000);
+
+    it("does not hang on an unterminated $$ body", () => {
+      const sql = `CREATE FUNCTION f() RETURNS trigger AS $$
+BEGIN
+  NEW.tsv := to_tsvector('simple', ${concat(12)});
+  RETURN NEW;`;
+      expect(parseSql(sql)).toEqual([]);
+    }, 5000);
+
+    it("treats $1 as a placeholder, not a dollar quote", () => {
+      const sql = `CREATE FUNCTION f(int) RETURNS int AS 'SELECT $1' LANGUAGE sql;
+ALTER TABLE "users" DROP COLUMN "name";`;
+      const results = parseSql(sql);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({ type: "alterTable", action: "dropColumn", line: 2 });
+    });
+  });
 });
