@@ -1,4 +1,4 @@
-export type StatementType =
+type StatementType =
   | "alterTable"
   | "createIndex"
   | "dropIndex"
@@ -19,7 +19,7 @@ export type StatementType =
   | "deleteStatement"
   | "unknown";
 
-export type AlterAction =
+type AlterAction =
   | "addColumn"
   | "dropColumn"
   | "renameColumn"
